@@ -1,3 +1,13 @@
+/* Ajustes de espaçamento para inputs com ícone à esquerda na tela de Login */
+.login-form .p-input-icon-left > .p-inputtext,
+.login-form .p-input-icon-left > .p-password > input.p-inputtext {
+  padding-left: 2.25rem; /* espaço extra pro ícone */
+}
+
+/* Opcional: alinhar melhor o ícone verticalmente */
+.login-form .p-input-icon-left > i {
+  left: 0.75rem; /* move um pouco o ícone pra direita */
+}
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
