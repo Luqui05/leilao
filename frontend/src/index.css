@@ -1,23 +1,23 @@
-/* Ajustes de espaçamento para inputs com ícone à esquerda na tela de Login */
-.login-form .p-input-icon-left > .p-inputtext,
-.login-form .p-input-icon-left > .p-password > input.p-inputtext {
-  padding-left: 2.25rem; /* espaço extra pro ícone */
+.form-with-left-icons .p-input-icon-left > .p-inputtext,
+.form-with-left-icons .p-input-icon-left > .p-password > input.p-inputtext,
+.form-with-left-icons .p-input-icon-left .p-password-input {
+  padding-left: 2.25rem;
 }
 
-/* Opcional: alinhar melhor o ícone verticalmente */
-.login-form .p-input-icon-left > i {
-  left: 0.75rem; /* move um pouco o ícone pra direita */
+.form-with-left-icons .p-input-icon-left > i {
+  left: 0.75rem;
 }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }

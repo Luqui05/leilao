@@ -55,7 +55,7 @@ export default function Login() {
         <div className="surface-ground min-h-screen flex align-items-center justify-content-center p-3">
             <div className="w-full" style={{ maxWidth: 420 }}>
                 <Card title="Acesso ao Sistema" className="shadow-2">
-                    <form onSubmit={onSubmit} className="p-fluid login-form">
+                    <form onSubmit={onSubmit} className="p-fluid login-form form-with-left-icons">
                         <div className="field mb-3">
                             <label htmlFor="email" className="block mb-2">
                                 E-mail
