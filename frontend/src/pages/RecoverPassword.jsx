@@ -26,10 +26,9 @@ export default function RecoverPassword() {
     try {
       // TODO: integrar com backend: POST /auth/recover (ou equivalente)
       // await api.post('/auth/recover', { email });
-      alert(
-        "Se o e-mail existir, enviaremos instruções para recuperação de senha."
-      );
-      navigate("/login");
+      alert("Se o e-mail existir, enviaremos instruções para recuperação de senha.");
+      // Redireciona para alterar senha com e-mail pré-preenchido
+      navigate(`/alterar-senha?email=${encodeURIComponent(email)}`);
     } finally {
       setSubmitting(false);
     }
@@ -68,6 +67,13 @@ export default function RecoverPassword() {
                 icon="pi pi-times"
                 className="p-button-text"
                 onClick={() => navigate("/login")}
+              />
+              <Button
+                type="button"
+                label="Já tenho o código"
+                icon="pi pi-shield"
+                className="p-button-text"
+                onClick={() => navigate(`/alterar-senha?email=${encodeURIComponent(email)}`)}
               />
               <Button
                 type="submit"
