@@ -3,6 +3,8 @@ package br.com.lucas.leilao.model;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
@@ -43,10 +45,12 @@ public class Categoria {
   private String observacao;
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn(name = "criador_id", nullable = false, foreignKey = @ForeignKey(name = "fk_caategoria_criador"))
+  @JoinColumn(name = "criador_id", nullable = false, foreignKey = @ForeignKey(name = "fk_categoria_criador"))
+  @JsonIgnore // evita LazyInitialization e recursão no retorno
   private Pessoa criador;
 
-  @OneToMany(mappedBy = "categorias")
+  @OneToMany(mappedBy = "categoria")
   @Builder.Default
+  @JsonIgnore // evita recursão/leitura LAZY no retorno
   private Set<Leilao> leiloes = new LinkedHashSet<>();
 }

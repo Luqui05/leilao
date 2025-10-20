@@ -81,7 +81,7 @@ public class Leilao {
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "categoria_id", nullable = false, foreignKey = @ForeignKey(name = "fk_leilao_categoria"))
-  private Categoria categoria;
+  private Categoria categorias;
 
   // publicador do leilão
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
