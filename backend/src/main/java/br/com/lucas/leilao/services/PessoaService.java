@@ -3,6 +3,7 @@ package br.com.lucas.leilao.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,9 @@ public class PessoaService {
   @Autowired
   private PessoaRepository repository;
 
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
   @Transactional(readOnly = true)
   public List<Pessoa> findAll() {
     return repository.findAll();
@@ -30,6 +34,8 @@ public class PessoaService {
 
   @Transactional
   public Pessoa save(Pessoa pessoa) {
+    // Criptografa a senha antes de salvar
+    pessoa.setSenha(passwordEncoder.encode(pessoa.getSenha()));
     return repository.save(pessoa);
   }
 
@@ -38,7 +44,7 @@ public class PessoaService {
     var pessoa = findById(id);
     req.nome().ifPresent(pessoa::setNome);
     req.email().ifPresent(pessoa::setEmail);
-    req.senha().ifPresent(pessoa::setSenha);
+    req.senha().ifPresent(senha -> pessoa.setSenha(passwordEncoder.encode(senha)));
     req.codigoValidacao().ifPresent(pessoa::setCodigoValidacao);
     req.validadeCodigoValidacao().ifPresent(pessoa::setValidadeCodigoValidacao);
     req.ativo().ifPresent(pessoa::setAtivo);

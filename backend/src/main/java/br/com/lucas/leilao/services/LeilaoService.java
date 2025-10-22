@@ -61,7 +61,7 @@ public class LeilaoService {
       Categoria cat = categoriaRepository.findById(catId)
         .orElseThrow(() -> new NotFoundException("Categoria não encontrada! Id: " + catId));
       // campo se chama "categorias" no model
-      leilao.setCategorias(cat);
+      leilao.setCategoria(cat);
     });
 
     req.publicadorId().ifPresent(pubId -> {

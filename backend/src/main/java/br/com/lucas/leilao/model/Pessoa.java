@@ -1,8 +1,16 @@
 package br.com.lucas.leilao.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
@@ -33,7 +41,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Pessoa {
+public class Pessoa implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,32 +73,24 @@ public class Pessoa {
   private byte[] fotoPerfil;
 
   // Pessoa <-> Perfil (classe associativa)
-  @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
   @Builder.Default
-  private Set<PessoaPerfil> perfis = new LinkedHashSet<>();
+  private List<PessoaPerfil> perfis = new ArrayList<>();
 
-  // Pessoa cria Categoria
-  @OneToMany(mappedBy = "criador")
-  @Builder.Default
-  private Set<Categoria> categoriasCriadas = new LinkedHashSet<>();
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return perfis.stream()
+        .map(pessoaPerfil -> new SimpleGrantedAuthority("ROLE_" + pessoaPerfil.getPerfil().getTipo().name()))
+        .collect(Collectors.toList());
+  }
 
-  // Pessoa publica Leilao
-  @OneToMany(mappedBy = "publicador")
-  @Builder.Default
-  private Set<Leilao> leiloesPublicados = new LinkedHashSet<>();
+  @Override
+  public String getPassword() {
+    return this.senha;
+  }
 
-  // Pessoa realiza Lance
-  @OneToMany(mappedBy = "autor")
-  @Builder.Default
-  private Set<Lance> lances = new LinkedHashSet<>();
-
-  // Pessoa escreve Feedback
-  @OneToMany(mappedBy = "autor")
-  @Builder.Default
-  private Set<Feedback> feedbacksEscritos = new LinkedHashSet<>();
-
-  // Pessoa recebe Feedback (destinatário)
-  @OneToMany(mappedBy = "destinatario")
-  @Builder.Default
-  private Set<Feedback> feedbacksRecebidos = new LinkedHashSet<>();
+  @Override
+  public String getUsername() {
+    return this.email;
+  }
 }
