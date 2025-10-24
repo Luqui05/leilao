@@ -26,6 +26,9 @@ public class PessoaService {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
+  @Autowired
+  private EmailService emailService;
+
   @Transactional(readOnly = true)
   public List<Pessoa> findAll() {
     return repository.findAll();
@@ -41,7 +44,12 @@ public class PessoaService {
   public Pessoa save(Pessoa pessoa) {
     // Criptografa a senha antes de salvar
     pessoa.setSenha(passwordEncoder.encode(pessoa.getSenha()));
-    return repository.save(pessoa);
+    Pessoa pessoaSalva = repository.save(pessoa);
+
+    // Envia e-mail de confirmação de cadastro
+    emailService.enviarEmailConfirmacaoCadastro(pessoaSalva);
+
+    return pessoaSalva;
   }
 
   @Transactional
@@ -74,8 +82,8 @@ public class PessoaService {
 
       repository.save(pessoa);
 
-      // TODO: Futuramente, aqui será o local para chamar o serviço de envio de e-mail
-      // emailService.enviarEmailRecuperacao(email, codigo);
+      // Envia o e-mail de recuperação de senha
+      emailService.enviarEmailRecuperacaoSenha(pessoa);
     });
     // Se o e-mail não existir, não fazemos nada para evitar ataques de enumeração
     // de usuário.

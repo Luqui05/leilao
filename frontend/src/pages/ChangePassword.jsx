@@ -14,8 +14,13 @@ export default function ChangePassword() {
     return params.get("email") || "";
   };
 
+  const getCodeFromQuery = () => {
+    const params = new URLSearchParams(search);
+    return params.get("code") || "";
+  }
+
   const [email, setEmail] = useState(getEmailFromQuery());
-  const [codigo, setCodigo] = useState("");
+  const [codigo, setCodigo] = useState(getCodeFromQuery());
   const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [submitting, setSubmitting] = useState(false);

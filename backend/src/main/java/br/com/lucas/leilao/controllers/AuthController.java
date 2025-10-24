@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.lucas.leilao.dto.auth.LoginRequest;
 import br.com.lucas.leilao.dto.auth.PasswordChangeRequest;
 import br.com.lucas.leilao.dto.auth.PasswordChangeWithCodeRequest;
-import br.com.lucas.leilao.dto.auth.PasswordRecover;
+import br.com.lucas.leilao.dto.auth.PasswordRecoverRequest;
 import br.com.lucas.leilao.dto.auth.TokenResponse;
 import br.com.lucas.leilao.model.Pessoa;
 import br.com.lucas.leilao.security.JwtTokenProvider;
@@ -45,7 +45,7 @@ public class AuthController {
   }
 
   @PostMapping("/recover")
-  public ResponseEntity<Void> recoverPassword(@RequestBody @Valid PasswordRecover request) {
+  public ResponseEntity<Void> recoverPassword(@RequestBody @Valid PasswordRecoverRequest request) {
     pessoaService.solicitarRecuperacaoSenha(request.email());
     // Retorna 204 No Content para não revelar se o e-mail existe ou não
     return ResponseEntity.noContent().build();
