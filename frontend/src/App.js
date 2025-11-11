@@ -4,6 +4,8 @@ import Register from './pages/Register';
 import RecoverPassword from './pages/RecoverPassword';
 import ChangePassword from './pages/ChangePassword';
 import Home from './pages/Home';
+import CategoriasList from './pages/CategoriasList';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 
 function App() {
   return (
@@ -13,7 +15,8 @@ function App() {
       <Route path="/cadastro" element={<Register />} />
       <Route path="/recuperar-senha" element={<RecoverPassword />} />
       <Route path="/alterar-senha" element={<ChangePassword />} />
-      <Route path="/home" element={<Home />} />
+  <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+  <Route path="/categorias" element={<ProtectedRoute><CategoriasList /></ProtectedRoute>} />
     </Routes>
   );
 }
