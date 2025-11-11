@@ -3,6 +3,8 @@ package br.com.lucas.leilao.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,13 @@ public class CategoriaService {
 
   @Transactional
   public Categoria save(Categoria categoria) {
+    // se o criador não vier no payload, atribui o usuário autenticado
+    if (categoria.getCriador() == null) {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null && auth.getPrincipal() instanceof br.com.lucas.leilao.model.Pessoa pessoaAuth) {
+        categoria.setCriador(pessoaAuth);
+      }
+    }
     return repository.save(categoria);
   }
 
