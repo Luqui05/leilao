@@ -3,6 +3,7 @@ import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 
 export default function RecoverPassword() {
   const navigate = useNavigate();
@@ -24,11 +25,12 @@ export default function RecoverPassword() {
     if (!validar()) return;
     setSubmitting(true);
     try {
-      // TODO: integrar com backend: POST /auth/recover (ou equivalente)
-      // await api.post('/auth/recover', { email });
-      alert("Se o e-mail existir, enviaremos instruções para recuperação de senha.");
-      // Redireciona para alterar senha com e-mail pré-preenchido
+      await authService.recover(email);
+      // Mensagem genérica para não revelar existência do e-mail
+      alert("Se o e-mail existir, enviaremos o código/senha temporária.");
       navigate(`/alterar-senha?email=${encodeURIComponent(email)}`);
+    } catch (err) {
+      alert(err?.message || 'Falha ao solicitar recuperação.');
     } finally {
       setSubmitting(false);
     }

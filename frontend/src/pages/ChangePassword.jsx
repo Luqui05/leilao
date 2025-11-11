@@ -4,6 +4,7 @@ import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -80,10 +81,11 @@ export default function ChangePassword() {
 
     setSubmitting(true);
     try {
-      // TODO: integrar com backend: POST /auth/change-password { email, codigo, senha }
-      // await api.post('/auth/change-password', { email, codigo, novaSenha: senha });
+      await authService.changePasswordWithCode({ email, codigo, novaSenha: senha });
       alert("Senha alterada com sucesso.");
       navigate("/login");
+    } catch (err) {
+      alert(err?.message || 'Falha ao alterar senha com código.');
     } finally {
       setSubmitting(false);
     }

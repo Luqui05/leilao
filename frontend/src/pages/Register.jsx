@@ -3,22 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
+import authService from "../services/authService";
 
 export default function Register() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({ nome: "", email: "" });
+  const [errors, setErrors] = useState({ nome: "", email: "", senha: "" });
 
   const validar = () => {
-    const next = { nome: "", email: "" };
+    const next = { nome: "", email: "", senha: "" };
     if (!nome) next.nome = "Informe o nome.";
     if (!email) next.email = "Informe o e-mail.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       next.email = "E-mail inválido.";
+    if (!senha) next.senha = "Informe a senha.";
     setErrors(next);
-    return !next.nome && !next.email;
+    return !next.nome && !next.email && !next.senha;
   };
 
   const onSubmit = async (e) => {
@@ -26,12 +29,14 @@ export default function Register() {
     if (!validar()) return;
     setSubmitting(true);
     try {
-      // TODO: integrar com backend: POST /auth/register (ou equivalente)
-      // Exemplo:
-      // const { data } = await api.post('/auth/register', { nome, email });
-      // navigate('/login');
-
-      setTimeout(() => navigate("/login"), 400);
+      // integra com backend: cria Pessoa (nome, email, senha)
+      await authService.register({ nome, email, senha });
+      // sucesso
+      alert('Cadastro realizado com sucesso. Verifique seu e-mail (se aplicável).');
+      navigate('/login');
+    } catch (err) {
+      // mostra erro amigável (network/server)
+      alert(err?.message || 'Falha ao efetuar cadastro.');
     } finally {
       setSubmitting(false);
     }
@@ -76,6 +81,20 @@ export default function Register() {
               {errors.email && (
                 <small className="p-error">{errors.email}</small>
               )}
+            </div>
+
+            <div className="field mb-3">
+              <label htmlFor="senha" className="block mb-2">Senha</label>
+              <InputText
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className={errors.senha ? "p-invalid w-full" : "w-full"}
+                placeholder="Sua senha"
+                autoComplete="new-password"
+              />
+              {errors.senha && <small className="p-error">{errors.senha}</small>}
             </div>
 
             <div className="flex flex-column sm:flex-row gap-2 justify-content-between mt-2">

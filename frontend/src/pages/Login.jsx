@@ -4,6 +4,7 @@ import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
+import authService from "../services/authService";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -38,14 +39,11 @@ export default function Login() {
         if (!validar()) return;
         setSubmitting(true);
         try {
-            // TODO: integrar com backend: POST /auth/login e armazenar token
-            // Exemplo futuro:
-            // const { data } = await api.post('/auth/login', { email, senha });
-            // localStorage.setItem('token', data.token);
-            // navigate('/'); // redirecionar conforme fluxo
-
-            // Por enquanto, apenas navega e simula sucesso
-            setTimeout(() => navigate("/"), 400);
+                await authService.login(email, senha);
+                // redireciona para home
+                navigate('/home');
+            } catch (err) {
+                alert(err?.message || 'Falha ao autenticar.');
         } finally {
             setSubmitting(false);
         }
