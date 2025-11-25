@@ -13,23 +13,12 @@ export default function Login() {
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({ email: "", senha: "" });
 
-    const strongPasswordMsg =
-        "A senha deve ter no mínimo 6 caracteres e conter pelo menos 1 letra maiúscula, 1 letra minúscula, 1 número e 1 caractere especial.";
-
-    const isStrongPassword = (value) => {
-        // Pelo menos 6, 1 maiúscula, 1 minúscula, 1 número, 1 especial
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/.test(
-            value
-        );
-    };
-
     const validar = () => {
         const next = { email: "", senha: "" };
         if (!email) next.email = "Informe o e-mail.";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
             next.email = "E-mail inválido.";
         if (!senha) next.senha = "Informe a senha.";
-        else if (!isStrongPassword(senha)) next.senha = strongPasswordMsg;
         setErrors(next);
         return !next.email && !next.senha;
     };
