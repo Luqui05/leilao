@@ -12,9 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.lucas.leilao.dto.auth.PasswordChangeRequest;
 import br.com.lucas.leilao.dto.auth.PasswordChangeWithCodeRequest;
+import br.com.lucas.leilao.dto.pessoa.PessoaListResponse;
 import br.com.lucas.leilao.dto.pessoa.PessoaUpdateRequest;
+import br.com.lucas.leilao.enums.TipoPerfil;
 import br.com.lucas.leilao.exceptions.NotFoundException;
+import br.com.lucas.leilao.model.Perfil;
 import br.com.lucas.leilao.model.Pessoa;
+import br.com.lucas.leilao.model.PessoaPerfil;
+import br.com.lucas.leilao.repositories.PerfilRepository;
 import br.com.lucas.leilao.repositories.PessoaRepository;
 
 @Service
@@ -24,14 +29,19 @@ public class PessoaService {
   private PessoaRepository repository;
 
   @Autowired
+  private PerfilRepository perfilRepository;
+
+  @Autowired
   private PasswordEncoder passwordEncoder;
 
   @Autowired
   private EmailService emailService;
 
   @Transactional(readOnly = true)
-  public List<Pessoa> findAll() {
-    return repository.findAll();
+  public List<PessoaListResponse> findAll() {
+    return repository.findAll().stream()
+        .map(p -> new PessoaListResponse(p.getId(), p.getNome(), p.getEmail()))
+        .toList();
   }
 
   @Transactional(readOnly = true)
@@ -44,6 +54,21 @@ public class PessoaService {
   public Pessoa save(Pessoa pessoa) {
     // Criptografa a senha antes de salvar
     pessoa.setSenha(passwordEncoder.encode(pessoa.getSenha()));
+
+    // Verifica se é o primeiro usuário
+    boolean isFirstUser = repository.count() == 0;
+    TipoPerfil tipoPerfil = isFirstUser ? TipoPerfil.ADMIN : TipoPerfil.COMPRADOR;
+
+    Perfil perfil = perfilRepository.findByTipo(tipoPerfil)
+        .orElseThrow(() -> new NotFoundException("Perfil " + tipoPerfil + " não encontrado."));
+
+    PessoaPerfil pessoaPerfil = PessoaPerfil.builder()
+        .pessoa(pessoa)
+        .perfil(perfil)
+        .build();
+
+    pessoa.getPerfis().add(pessoaPerfil);
+
     Pessoa pessoaSalva = repository.save(pessoa);
 
     // Envia e-mail de confirmação de cadastro

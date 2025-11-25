@@ -36,7 +36,7 @@ public class PessoaPerfil {
   @JoinColumn(name = "pessoa_id", nullable = false, foreignKey = @ForeignKey(name = "fk_pessoa_perfil_pessoa"))
   private Pessoa pessoa;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @ManyToOne(optional = false, fetch = FetchType.EAGER)
   @JoinColumn(name = "perfil_id", nullable = false, foreignKey = @ForeignKey(name = "fk_pessoa_perfil_perfil"))
   private Perfil perfil;
 }

@@ -37,10 +37,10 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
-    authenticationManager.authenticate(
+    Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
 
-    String token = jwtTokenProvider.gerarToken(request.email());
+    String token = jwtTokenProvider.gerarToken(authentication);
     return ResponseEntity.ok(new TokenResponse(token));
   }
 

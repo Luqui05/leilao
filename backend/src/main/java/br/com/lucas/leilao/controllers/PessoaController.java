@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.lucas.leilao.dto.pessoa.PessoaListResponse;
 import br.com.lucas.leilao.dto.pessoa.PessoaUpdateRequest;
 import br.com.lucas.leilao.model.Pessoa;
 import br.com.lucas.leilao.services.PessoaService;
@@ -25,7 +26,7 @@ public class PessoaController {
   }
 
   @GetMapping
-  public ResponseEntity<List<Pessoa>> readAll() {
+  public ResponseEntity<List<PessoaListResponse>> readAll() {
     return ResponseEntity.ok(service.findAll());
   }
 

@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import br.com.lucas.leilao.validation.ValidPassword;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -57,7 +58,8 @@ public class Pessoa implements UserDetails {
   private String email;
 
   @NotBlank
-  @Size(min = 6, max = 255)
+  @ValidPassword
+  @Size(max = 255)
   private String senha;
 
   @Size(max = 120)

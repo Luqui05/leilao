@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.lucas.leilao.dto.pessoaperfil.PessoaPerfilListResponse;
 import br.com.lucas.leilao.dto.pessoaperfil.PessoaPerfilUpdateRequest;
 import br.com.lucas.leilao.exceptions.NotFoundException;
 import br.com.lucas.leilao.model.Pessoa;
@@ -23,9 +24,40 @@ public class PessoaPerfilService {
   @Autowired private PerfilRepository perfilRepository;
 
   @Transactional(readOnly = true)
-  public List<PessoaPerfil> findAll() {
-    return repository.findAll();
+  public List<PessoaPerfilListResponse> findAll() {
+    return repository.findAll().stream()
+        .map(pp -> new PessoaPerfilListResponse(
+            pp.getId(),
+            new PessoaPerfilListResponse.PessoaSimpleDTO(
+                pp.getPessoa().getId(),
+                pp.getPessoa().getNome(),
+                pp.getPessoa().getEmail()
+            ),
+            new PessoaPerfilListResponse.PerfilSimpleDTO(
+                pp.getPerfil().getId(),
+                pp.getPerfil().getTipo()
+            )
+        ))
+        .toList();
   }
+
+    @Transactional(readOnly = true)
+    public List<PessoaPerfilListResponse> findByPessoaId(Long pessoaId) {
+    return repository.findAllByPessoaId(pessoaId).stream()
+      .map(pp -> new PessoaPerfilListResponse(
+        pp.getId(),
+        new PessoaPerfilListResponse.PessoaSimpleDTO(
+          pp.getPessoa().getId(),
+          pp.getPessoa().getNome(),
+          pp.getPessoa().getEmail()
+        ),
+        new PessoaPerfilListResponse.PerfilSimpleDTO(
+          pp.getPerfil().getId(),
+          pp.getPerfil().getTipo()
+        )
+      ))
+      .toList();
+    }
 
   @Transactional(readOnly = true)
   public PessoaPerfil findById(Long id) {
