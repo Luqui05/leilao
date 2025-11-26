@@ -91,7 +91,6 @@ const authService = {
     if (!token) return false;
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
-      console.log("Token payload:", payload); // DEBUG
       return (
         payload.roles &&
         Array.isArray(payload.roles) &&
