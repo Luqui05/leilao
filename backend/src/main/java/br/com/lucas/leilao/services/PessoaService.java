@@ -1,10 +1,12 @@
 package br.com.lucas.leilao.services;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.lucas.leilao.dto.auth.PasswordChangeRequest;
 import br.com.lucas.leilao.dto.auth.PasswordChangeWithCodeRequest;
-import br.com.lucas.leilao.dto.pessoa.PessoaListResponse;
+import br.com.lucas.leilao.dto.pessoa.PessoaResponse;
 import br.com.lucas.leilao.dto.pessoa.PessoaUpdateRequest;
 import br.com.lucas.leilao.enums.TipoPerfil;
 import br.com.lucas.leilao.exceptions.NotFoundException;
@@ -21,6 +23,7 @@ import br.com.lucas.leilao.model.Pessoa;
 import br.com.lucas.leilao.model.PessoaPerfil;
 import br.com.lucas.leilao.repositories.PerfilRepository;
 import br.com.lucas.leilao.repositories.PessoaRepository;
+import br.com.lucas.leilao.security.SecurityUtils;
 
 @Service
 public class PessoaService {
@@ -38,10 +41,9 @@ public class PessoaService {
   private EmailService emailService;
 
   @Transactional(readOnly = true)
-  public List<PessoaListResponse> findAll() {
-    return repository.findAll().stream()
-        .map(p -> new PessoaListResponse(p.getId(), p.getNome(), p.getEmail()))
-        .toList();
+  public Page<PessoaResponse> buscarComFiltros(String termo, Pageable pageable) {
+    Page<Pessoa> pessoas = repository.buscarComFiltros(termo, pageable);
+    return pessoas.map(PessoaResponse::fromEntity);
   }
 
   @Transactional(readOnly = true)
@@ -50,12 +52,21 @@ public class PessoaService {
         .orElseThrow(() -> new NotFoundException("Pessoa não encontrada! Id: " + id));
   }
 
+  @Transactional(readOnly = true)
+  public PessoaResponse findByIdAsResponse(Long id) {
+    // Validação: só pode acessar a si mesmo ou ser ADMIN
+    if (!SecurityUtils.canAccessPessoa(id)) {
+      throw new AccessDeniedException("Você não tem permissão para acessar estes dados.");
+    }
+    
+    Pessoa pessoa = findById(id);
+    return PessoaResponse.fromEntity(pessoa);
+  }
+
   @Transactional
   public Pessoa save(Pessoa pessoa) {
-    // Criptografa a senha antes de salvar
     pessoa.setSenha(passwordEncoder.encode(pessoa.getSenha()));
 
-    // Verifica se é o primeiro usuário
     boolean isFirstUser = repository.count() == 0;
     TipoPerfil tipoPerfil = isFirstUser ? TipoPerfil.ADMIN : TipoPerfil.COMPRADOR;
 
@@ -68,50 +79,50 @@ public class PessoaService {
         .build();
 
     pessoa.getPerfis().add(pessoaPerfil);
-
     Pessoa pessoaSalva = repository.save(pessoa);
-
-    // Envia e-mail de confirmação de cadastro
     emailService.enviarEmailConfirmacaoCadastro(pessoaSalva);
-
     return pessoaSalva;
   }
 
   @Transactional
-  public Pessoa update(Long id, PessoaUpdateRequest req) {
+  public PessoaResponse update(Long id, PessoaUpdateRequest req) {
+    // Validação: só pode editar a si mesmo ou ser ADMIN
+    if (!SecurityUtils.canAccessPessoa(id)) {
+      throw new AccessDeniedException("Você não tem permissão para editar estes dados.");
+    }
+
     var pessoa = findById(id);
     req.nome().ifPresent(pessoa::setNome);
     req.email().ifPresent(pessoa::setEmail);
     req.senha().ifPresent(senha -> pessoa.setSenha(passwordEncoder.encode(senha)));
-    req.codigoValidacao().ifPresent(pessoa::setCodigoValidacao);
-    req.validadeCodigoValidacao().ifPresent(pessoa::setValidadeCodigoValidacao);
-    req.ativo().ifPresent(pessoa::setAtivo);
-    req.fotoPerfil().ifPresent(pessoa::setFotoPerfil);
-    return repository.save(pessoa);
+    
+    // Apenas ADMIN pode alterar ativo
+    req.ativo().ifPresent(ativo -> {
+      if (!SecurityUtils.isAdmin()) {
+        throw new AccessDeniedException("Apenas administradores podem alterar o status ativo.");
+      }
+      pessoa.setAtivo(ativo);
+    });
+    
+    Pessoa atualizado = repository.save(pessoa);
+    return PessoaResponse.fromEntity(atualizado);
   }
 
   @Transactional
   public void delete(Long id) {
+    // Apenas ADMIN pode excluir (já protegido no SecurityConfig)
     repository.deleteById(id);
   }
 
   @Transactional
   public void solicitarRecuperacaoSenha(String email) {
     repository.findByEmail(email).ifPresent(pessoa -> {
-      // gera código numérico de 6 digitos
       String codigo = String.format("%06d", ThreadLocalRandom.current().nextInt(100000, 1000000));
-
       pessoa.setCodigoValidacao(codigo);
-      // validade do código -> 10 min
       pessoa.setValidadeCodigoValidacao(LocalDateTime.now().plusMinutes(10));
-
       repository.save(pessoa);
-
-      // Envia o e-mail de recuperação de senha
       emailService.enviarEmailRecuperacaoSenha(pessoa);
     });
-    // Se o e-mail não existir, não fazemos nada para evitar ataques de enumeração
-    // de usuário.
   }
 
   @Transactional
@@ -127,11 +138,9 @@ public class PessoaService {
       throw new BadCredentialsException("Código de verificação expirado.");
     }
 
-    // altera senha e limpa os campos de recuperação
     pessoa.setSenha(passwordEncoder.encode(request.novaSenha()));
     pessoa.setCodigoValidacao(null);
     pessoa.setValidadeCodigoValidacao(null);
-
     repository.save(pessoa);
   }
 
@@ -140,12 +149,10 @@ public class PessoaService {
     Pessoa pessoa = repository.findByEmail(email)
         .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
 
-    // checa se a senha atual fornecida corresponde à senha armazenada
     if (!passwordEncoder.matches(request.senhaAtual(), pessoa.getPassword())) {
       throw new BadCredentialsException("A senha atual está incorreta");
     }
 
-    // criptografa e define a nova senha
     pessoa.setSenha(passwordEncoder.encode(request.novaSenha()));
     repository.save(pessoa);
   }
