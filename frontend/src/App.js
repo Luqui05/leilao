@@ -8,6 +8,7 @@ import CategoriasList from "./pages/CategoriasList";
 import PermissoesUsuariosList from "./pages/PermissoesUsuariosList";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import LeiloesList from "./pages/LeiloesList";
+import PessoasList from "./pages/PessoasList";
 
 function App() {
   return (
@@ -46,6 +47,15 @@ function App() {
         element={
           <ProtectedRoute>
             <LeiloesList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pessoas"
+        element={
+          <ProtectedRoute>
+            <PessoasList />
           </ProtectedRoute>
         }
       />

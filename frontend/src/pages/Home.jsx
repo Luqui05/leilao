@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="p-4">
       <h2 className="mb-3">Bem-vindo ao sistema</h2>
-      <p className="mb-4">Você está autenticado. Selecione uma opção:.</p>
+      <p className="mb-4">Você está autenticado. Selecione uma opção:</p>
       <div className="flex gap-2 mb-4">
         <Button
           label="Categorias"
@@ -30,6 +30,11 @@ export default function Home() {
           icon="pi pi-gavel"
           className="p-button-success"
           onClick={() => navigate("/leiloes")}
+        />
+        <Button
+          label="Pessoas"
+          icon="pi pi-users"
+          onClick={() => navigate("/pessoas")}
         />
         <Button
           label="Sair"
