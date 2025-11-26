@@ -1,12 +1,17 @@
 package br.com.lucas.leilao.services;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.lucas.leilao.dto.leilao.LeilaoUpdateRequest;
+import br.com.lucas.leilao.enums.StatusLeilao;
 import br.com.lucas.leilao.exceptions.NotFoundException;
 import br.com.lucas.leilao.model.Categoria;
 import br.com.lucas.leilao.model.Leilao;
@@ -28,6 +33,17 @@ public class LeilaoService {
   private PessoaRepository pessoaRepository;
 
   @Transactional(readOnly = true)
+  public Page<Leilao> buscarComFiltros(
+      StatusLeilao status,
+      Long categoriaId,
+      LocalDateTime dataInicio,
+      LocalDateTime dataFim,
+      String termo,
+      Pageable pageable) {
+    return repository.buscarComFiltros(status, categoriaId, dataInicio, dataFim, termo, pageable);
+  }
+
+  @Transactional(readOnly = true)
   public List<Leilao> findAll() {
     return repository.findAll();
   }
@@ -35,7 +51,7 @@ public class LeilaoService {
   @Transactional(readOnly = true)
   public Leilao findById(Long id) {
     return repository.findById(id)
-      .orElseThrow(() -> new NotFoundException("Leilão não encontrado! Id: " + id));
+        .orElseThrow(() -> new NotFoundException("Leilão não encontrado! Id: " + id));
   }
 
   @Transactional
@@ -59,14 +75,13 @@ public class LeilaoService {
 
     req.categoriaId().ifPresent(catId -> {
       Categoria cat = categoriaRepository.findById(catId)
-        .orElseThrow(() -> new NotFoundException("Categoria não encontrada! Id: " + catId));
-      // campo se chama "categorias" no model
+          .orElseThrow(() -> new NotFoundException("Categoria não encontrada! Id: " + catId));
       leilao.setCategoria(cat);
     });
 
     req.publicadorId().ifPresent(pubId -> {
       Pessoa pub = pessoaRepository.findById(pubId)
-        .orElseThrow(() -> new NotFoundException("Pessoa (publicador) não encontrada! Id: " + pubId));
+          .orElseThrow(() -> new NotFoundException("Pessoa (publicador) não encontrada! Id: " + pubId));
       leilao.setPublicador(pub);
     });
 
