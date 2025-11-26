@@ -6,6 +6,7 @@ import ChangePassword from "./pages/ChangePassword";
 import Home from "./pages/Home";
 import CategoriasList from "./pages/CategoriasList";
 import PermissoesUsuariosList from "./pages/PermissoesUsuariosList";
+import LeiloesList from "./pages/LeilõesList";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
 function App() {
@@ -37,6 +38,14 @@ function App() {
         element={
           <ProtectedRoute>
             <PermissoesUsuariosList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/leiloes"
+        element={
+          <ProtectedRoute>
+            <LeiloesList />
           </ProtectedRoute>
         }
       />

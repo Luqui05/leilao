@@ -31,6 +31,12 @@ export default function Home() {
           className="p-button-danger"
           onClick={logout}
         />
+        <Button
+          label="Gerenciar Leilões"
+          icon="pi pi-gavel"
+          className="p-button-success"
+          onClick={() => navigate('/leiloes')}
+        />
       </div>
     </div>
   );

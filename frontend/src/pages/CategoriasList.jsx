@@ -199,7 +199,6 @@ export default function CategoriasList() {
     <div className="flex flex-column md:flex-row md:justify-content-between gap-2">
       <h3 className="m-0">Lista de Categorias</h3>
       <span className="p-input-icon-left">
-        <i className="pi pi-search" />
         <InputText
           value={filtroTermo}
           onChange={(e) => setFiltroTermo(e.target.value)}
