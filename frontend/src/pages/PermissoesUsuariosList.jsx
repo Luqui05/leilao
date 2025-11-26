@@ -25,7 +25,11 @@ export default function PermissoesUsuariosList() {
   const [perfilTipo, setPerfilTipo] = useState(null);
   const [errors, setErrors] = useState({ pessoaId: "", perfilTipo: "" });
 
-  const perfisDisponiveis = [
+  const [currentUser, setCurrentUser] = useState(null);
+  const isAdmin = authService.isAdmin();
+
+  // perfis base (use value=id do perfil no seu BD)
+  const PERFIS_BASE = [
     { label: "ADMIN", value: 1 }, // ID 1
     { label: "COMPRADOR", value: 2 }, // ID 2
     { label: "VENDEDOR", value: 3 }, // ID 3
@@ -34,8 +38,8 @@ export default function PermissoesUsuariosList() {
   const carregar = async () => {
     setLoading(true);
     try {
-      const data = await pessoaPerfilService.list();
-      setItens(data);
+      const data = await pessoaPerfilService.list(); // backend retorna all (admin) ou só do usuário logado
+      setItens(data || []);
     } catch (err) {
       alert(err?.message || "Falha ao carregar permissões.");
     } finally {
@@ -43,27 +47,60 @@ export default function PermissoesUsuariosList() {
     }
   };
 
-  const carregarPessoas = async () => {
+  const carregarPessoas = async (curUser) => {
     try {
-      const data = await pessoaService.list();
-      setPessoas(
-        data.map((p) => ({ label: `${p.nome} (${p.email})`, value: p.id }))
-      );
+      if (isAdmin) {
+        const data = await pessoaService.list();
+        setPessoas(
+          data.map((p) => ({ label: `${p.nome} (${p.email})`, value: p.id }))
+        );
+      } else if (curUser) {
+        // apenas o próprio usuário
+        setPessoas([
+          { label: `${curUser.nome} (${curUser.email})`, value: curUser.id },
+        ]);
+      } else {
+        setPessoas([]);
+      }
     } catch (err) {
       alert(err?.message || "Falha ao carregar pessoas.");
     }
   };
 
   useEffect(() => {
-    carregar();
-    carregarPessoas();
+    // busca current user e carrega
+    (async () => {
+      const me = await authService.getCurrentUser();
+      setCurrentUser(me);
+      await carregarPessoas(me);
+      await carregar();
+    })();
   }, []);
+
+  // util: verifica se usuário já tem um profile type (por label 'ADMIN'/'COMPRADOR'/'VENDEDOR')
+  const userHasProfileType = (tipo) => {
+    return itens.some((it) => it.perfil?.tipo === tipo);
+  };
 
   const abrirDialogNovo = () => {
     setEditando(null);
-    setPessoaId(null);
     setPerfilTipo(null);
     setErrors({ pessoaId: "", perfilTipo: "" });
+
+    // se não-admin: predefine pessoaId e remove opções ADMIN
+    if (!isAdmin && currentUser) {
+      setPessoaId(currentUser.id);
+      // se usuário já tem todos perfis permitidos, não abrir
+      const allowed = ["COMPRADOR", "VENDEDOR"]; // para não-admins
+      const available = allowed.filter((t) => !userHasProfileType(t));
+      if (available.length === 0) {
+        alert("Você já possui todos os perfis disponíveis.");
+        return;
+      }
+    } else {
+      setPessoaId(null);
+    }
+
     setShowDialog(true);
   };
 
@@ -85,6 +122,26 @@ export default function PermissoesUsuariosList() {
 
   const salvar = async () => {
     if (!validar()) return;
+
+    // verificação frontend para não-admin
+    if (!isAdmin && currentUser) {
+      // pessoaId deve ser a própria pessoa
+      if (pessoaId !== currentUser.id) {
+        alert("Você só pode atribuir permissões para si mesmo.");
+        return;
+      }
+      // perfil escolhido não pode ser ADMIN
+      const chosen = PERFIS_BASE.find((p) => p.value === perfilTipo);
+      if (!chosen || chosen.label === "ADMIN") {
+        alert("Operação não permitida.");
+        return;
+      }
+      // evitar duplicata
+      if (userHasProfileType(chosen.label)) {
+        alert("Você já possui este perfil.");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -127,9 +184,8 @@ export default function PermissoesUsuariosList() {
     navigate("/login");
   };
 
+  // ações só para admin
   const acoesTemplate = (rowData) => {
-    if (!authService.isAdmin()) return null;
-
     return (
       <div className="flex gap-2">
         <Button
@@ -167,6 +223,18 @@ export default function PermissoesUsuariosList() {
     return <Tag value={tipo} severity={severity} />;
   };
 
+  // options dinâmicas para o Dropdown de perfis, remove ADMIN se não-admin, remove perfis já atribuídos ao usuário (quando for self)
+  const getPerfilOptions = () => {
+    let options = PERFIS_BASE.slice(); // clone
+    if (!isAdmin) {
+      options = options.filter((p) => p.label !== "ADMIN");
+      // remove já atribuidos
+      const assignedTypes = itens.map((it) => it.perfil?.tipo);
+      options = options.filter((p) => !assignedTypes.includes(p.label));
+    }
+    return options;
+  };
+
   const dialogFooter = (
     <div>
       <Button
@@ -185,17 +253,24 @@ export default function PermissoesUsuariosList() {
     </div>
   );
 
-  const isAdmin = authService.isAdmin();
-
   return (
     <div className="p-4">
-      <Card title={isAdmin ? "Gerenciar Permissões de Usuários" : "Minhas Permissões"}>
+      <Card
+        title={
+          isAdmin ? "Gerenciar Permissões de Usuários" : "Minhas Permissões"
+        }
+      >
         <div className="flex justify-content-between mb-3">
           <div className="flex gap-2">
             <Button
               label="Nova Permissão"
               icon="pi pi-plus"
               onClick={abrirDialogNovo}
+              disabled={
+                !isAdmin &&
+                currentUser &&
+                ["COMPRADOR", "VENDEDOR"].every((t) => userHasProfileType(t))
+              }
             />
             <Button
               label="Voltar"
@@ -244,6 +319,8 @@ export default function PermissoesUsuariosList() {
             <label htmlFor="pessoa" className="block mb-2">
               Usuário *
             </label>
+
+            {/* se for admin, pode escolher qualquer pessoa; se não, escolhe apenas a si mesmo (campo desabilitado) */}
             <Dropdown
               id="pessoa"
               value={pessoaId}
@@ -252,7 +329,7 @@ export default function PermissoesUsuariosList() {
               placeholder="Selecione um usuário"
               className={errors.pessoaId ? "p-invalid w-full" : "w-full"}
               filter
-              disabled={!!editando}
+              disabled={!!editando || !isAdmin}
             />
             {errors.pessoaId && (
               <small className="p-error">{errors.pessoaId}</small>
@@ -266,7 +343,7 @@ export default function PermissoesUsuariosList() {
             <Dropdown
               id="perfil"
               value={perfilTipo}
-              options={perfisDisponiveis}
+              options={getPerfilOptions()}
               onChange={(e) => setPerfilTipo(e.value)}
               placeholder="Selecione um perfil"
               className={errors.perfilTipo ? "p-invalid w-full" : "w-full"}

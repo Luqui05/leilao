@@ -21,14 +21,15 @@ public class PessoaPerfilController {
   private PessoaPerfilService service;
 
   @PostMapping
-  public ResponseEntity<PessoaPerfil> create(@Valid @RequestBody PessoaPerfil request) {
-    var response = service.save(request);
+  public ResponseEntity<PessoaPerfil> create(@Valid @RequestBody PessoaPerfil request, Authentication authentication) {
+    var response = service.createForCaller(request, authentication);
     return ResponseEntity.status(201).body(response);
   }
 
   @GetMapping
   public ResponseEntity<List<PessoaPerfilListResponse>> readAll(Authentication authentication) {
-    // If caller is ADMIN, return all; otherwise return only the permissions of the authenticated user
+    // If caller is ADMIN, return all; otherwise return only the permissions of the
+    // authenticated user
     if (authentication != null && authentication.getAuthorities().stream()
         .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
       return ResponseEntity.ok(service.findAll());
@@ -53,7 +54,8 @@ public class PessoaPerfilController {
   }
 
   @PatchMapping("/{id}")
-  public ResponseEntity<PessoaPerfil> update(@PathVariable Long id, @Valid @RequestBody PessoaPerfilUpdateRequest request) {
+  public ResponseEntity<PessoaPerfil> update(@PathVariable Long id,
+      @Valid @RequestBody PessoaPerfilUpdateRequest request) {
     return ResponseEntity.ok(service.update(id, request));
   }
 

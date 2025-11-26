@@ -20,13 +20,11 @@ export default function Home() {
           icon="pi pi-list"
           onClick={() => navigate("/categorias")}
         />
-        {authService.isAdmin() && (
-          <Button
-            label="Permissões"
-            icon="pi pi-users"
-            onClick={() => navigate("/perfis")}
-          />
-        )}
+        <Button
+          label="Permissões"
+          icon="pi pi-users"
+          onClick={() => navigate("/perfis")}
+        />
         <Button
           label="Sair"
           icon="pi pi-sign-out"

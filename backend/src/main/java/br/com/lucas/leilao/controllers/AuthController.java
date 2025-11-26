@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import br.com.lucas.leilao.dto.auth.PasswordChangeRequest;
 import br.com.lucas.leilao.dto.auth.PasswordChangeWithCodeRequest;
 import br.com.lucas.leilao.dto.auth.PasswordRecoverRequest;
 import br.com.lucas.leilao.dto.auth.TokenResponse;
+import br.com.lucas.leilao.dto.pessoa.PessoaListResponse;
 import br.com.lucas.leilao.model.Pessoa;
 import br.com.lucas.leilao.security.JwtTokenProvider;
 import br.com.lucas.leilao.services.PessoaService;
@@ -42,6 +44,18 @@ public class AuthController {
 
     String token = jwtTokenProvider.gerarToken(authentication);
     return ResponseEntity.ok(new TokenResponse(token));
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<PessoaListResponse> me(Authentication authentication) {
+    if (authentication == null) {
+      return ResponseEntity.status(401).build();
+    }
+    Object principal = authentication.getPrincipal();
+    if (principal instanceof br.com.lucas.leilao.model.Pessoa pessoa) {
+      return ResponseEntity.ok(new PessoaListResponse(pessoa.getId(), pessoa.getNome(), pessoa.getEmail()));
+    }
+    return ResponseEntity.status(403).build();
   }
 
   @PostMapping("/recover")
