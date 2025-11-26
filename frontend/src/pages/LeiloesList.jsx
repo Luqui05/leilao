@@ -277,8 +277,8 @@ export default function LeiloesList() {
         observacao: observacao?.trim() || null,
         valorIncremento: valorIncremento,
         lanceMinimo: lanceMinimo,
-        categoria: { id: categoriaId },
-        publicador: { id: usuarioAtual?.id || 1 }, // Ajuste conforme sua lógica
+        categoriaId: categoriaId,
+        // publicadorId -> definido automaticamente pelo backend
       };
 
       if (editando) {

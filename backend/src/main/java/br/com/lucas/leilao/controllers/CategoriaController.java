@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -31,12 +32,14 @@ public class CategoriaController {
   private CategoriaService service;
 
   @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
   public ResponseEntity<Categoria> create(@Valid @RequestBody Categoria request) {
     var response = service.save(request);
     return ResponseEntity.status(201).body(response);
   }
 
   @GetMapping
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<Page<Categoria>> buscar(
       @RequestParam(required = false) String termo,
       @RequestParam(defaultValue = "0") int page,
@@ -52,19 +55,21 @@ public class CategoriaController {
   }
 
   @GetMapping("/todas")
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<List<Categoria>> readAll() {
     List<Categoria> categorias = service.findAll();
     return ResponseEntity.ok().body(categorias);
   }
 
   @GetMapping("/{id}")
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<Categoria> readById(@PathVariable("id") Long id) {
     Categoria categoria = service.findById(id);
     return ResponseEntity.ok().body(categoria);
   }
 
-  // Update parcial -> PATCH
   @PatchMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
   public ResponseEntity<Categoria> update(@PathVariable("id") Long id,
       @Valid @RequestBody CategoriaUpdateRequest request) {
     Categoria categoria = service.update(id, request);
@@ -72,6 +77,7 @@ public class CategoriaController {
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
     service.delete(id);
     return ResponseEntity.noContent().build();

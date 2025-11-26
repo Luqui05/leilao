@@ -26,16 +26,16 @@ export default function Home() {
           onClick={() => navigate("/perfis")}
         />
         <Button
+          label="Gerenciar Leilões"
+          icon="pi pi-gavel"
+          className="p-button-success"
+          onClick={() => navigate("/leiloes")}
+        />
+        <Button
           label="Sair"
           icon="pi pi-sign-out"
           className="p-button-danger"
           onClick={logout}
-        />
-        <Button
-          label="Gerenciar Leilões"
-          icon="pi pi-gavel"
-          className="p-button-success"
-          onClick={() => navigate('/leiloes')}
         />
       </div>
     </div>

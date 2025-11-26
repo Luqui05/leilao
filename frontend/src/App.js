@@ -6,8 +6,8 @@ import ChangePassword from "./pages/ChangePassword";
 import Home from "./pages/Home";
 import CategoriasList from "./pages/CategoriasList";
 import PermissoesUsuariosList from "./pages/PermissoesUsuariosList";
-import LeiloesList from "./pages/LeilõesList";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import LeiloesList from "./pages/LeiloesList";
 
 function App() {
   return (
