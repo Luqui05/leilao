@@ -1,9 +1,14 @@
 import api from "./api";
 
 const categoriaService = {
+  listPaginated: async (params = {}) => {
+    const response = await api.get("/api/categorias", { params });
+    return response.data;
+  },
+
   list: async () => {
     try {
-      const { data } = await api.get("/api/categorias");
+      const { data } = await api.get("/api/categorias/todas");
       return data;
     } catch (err) {
       throw new Error(

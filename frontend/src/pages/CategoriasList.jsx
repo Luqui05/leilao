@@ -7,15 +7,25 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { InputTextarea } from "primereact/inputtextarea";
+import { Message } from "primereact/message";
 import categoriaService from "../services/categoriaService";
 import authService from "../services/authService";
 
 export default function CategoriasList() {
   const navigate = useNavigate();
   const [itens, setItens] = useState([]);
-  const [itensFiltrados, setItensFiltrados] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const [lazyParams, setLazyParams] = useState({
+    first: 0,
+    rows: 10,
+    page: 0,
+    sortField: 'id',
+    sortOrder: 1,
+  });
+  const [filtroTermo, setFiltroTermo] = useState("");
 
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -25,14 +35,27 @@ export default function CategoriasList() {
   const [observacao, setObservacao] = useState("");
   const [errors, setErrors] = useState({ nome: "", observacao: "" });
 
-  const [filtroGlobal, setFiltroGlobal] = useState("");
+  useEffect(() => {
+    const newErrors = { nome: "", observacao: "" };
+    if (nome && nome.trim().length < 3) {
+      newErrors.nome = "O nome deve ter no mínimo 3 caracteres";
+    }
+    setErrors(newErrors);
+  }, [nome]);
 
   const carregar = async () => {
     setLoading(true);
     try {
-      const data = await categoriaService.list();
-      setItens(data || []);
-      setItensFiltrados(data || []);
+      const params = {
+        page: lazyParams.page,
+        size: lazyParams.rows,
+        sort: `${lazyParams.sortField},${lazyParams.sortOrder === 1 ? 'asc' : 'desc'}`,
+        termo: filtroTermo || undefined,
+      };
+
+      const data = await categoriaService.listPaginated(params);
+      setItens(data.content || []);
+      setTotalRecords(data.totalElements || 0);
     } catch (err) {
       alert(err?.message || "Falha ao carregar categorias.");
     } finally {
@@ -42,21 +65,24 @@ export default function CategoriasList() {
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [lazyParams, filtroTermo]);
 
-  useEffect(() => {
-    if (!filtroGlobal.trim()) {
-      setItensFiltrados(itens);
-    } else {
-      const termo = filtroGlobal.toLowerCase();
-      const filtrados = itens.filter(
-        (item) =>
-          item.nome?.toLowerCase().includes(termo) ||
-          item.observacao?.toLowerCase().includes(termo)
-      );
-      setItensFiltrados(filtrados);
-    }
-  }, [filtroGlobal, itens]);
+  const onPage = (event) => {
+    setLazyParams({
+      ...lazyParams,
+      first: event.first,
+      rows: event.rows,
+      page: event.page,
+    });
+  };
+
+  const onSort = (event) => {
+    setLazyParams({
+      ...lazyParams,
+      sortField: event.sortField || 'id',
+      sortOrder: event.sortOrder || 1,
+    });
+  };
 
   const abrirDialogNovo = () => {
     setEditando(null);
@@ -86,7 +112,11 @@ export default function CategoriasList() {
 
   const validar = () => {
     const next = { nome: "", observacao: "" };
-    if (!nome?.trim()) next.nome = "Informe o nome da categoria.";
+    if (!nome?.trim()) {
+      next.nome = "Informe o nome da categoria.";
+    } else if (nome.trim().length < 3) {
+      next.nome = "O nome deve ter no mínimo 3 caracteres";
+    }
     setErrors(next);
     return !next.nome;
   };
@@ -171,8 +201,8 @@ export default function CategoriasList() {
       <span className="p-input-icon-left">
         <i className="pi pi-search" />
         <InputText
-          value={filtroGlobal}
-          onChange={(e) => setFiltroGlobal(e.target.value)}
+          value={filtroTermo}
+          onChange={(e) => setFiltroTermo(e.target.value)}
           placeholder="Buscar categoria..."
           className="w-full md:w-20rem"
         />
@@ -194,6 +224,7 @@ export default function CategoriasList() {
         icon="pi pi-check"
         onClick={salvar}
         loading={submitting}
+        disabled={!!errors.nome}
       />
     </div>
   );
@@ -204,6 +235,15 @@ export default function CategoriasList() {
       icon="pi pi-times"
       onClick={() => setShowDetailDialog(false)}
     />
+  );
+
+  const emptyMessage = () => (
+    <div className="text-center p-4">
+      <i className="pi pi-inbox" style={{ fontSize: '3rem', color: '#ccc' }}></i>
+      <p className="text-color-secondary mt-3">
+        {filtroTermo ? 'Nenhuma categoria encontrada para este filtro.' : 'Nenhuma categoria cadastrada.'}
+      </p>
+    </div>
   );
 
   return (
@@ -232,16 +272,23 @@ export default function CategoriasList() {
         </div>
 
         <DataTable
-          value={itensFiltrados}
+          value={itens}
           loading={loading}
           header={header}
-          emptyMessage="Nenhuma categoria encontrada."
+          emptyMessage={emptyMessage()}
+          lazy
           paginator
-          rows={10}
+          first={lazyParams.first}
+          rows={lazyParams.rows}
+          totalRecords={totalRecords}
+          onPage={onPage}
+          onSort={onSort}
+          sortField={lazyParams.sortField}
+          sortOrder={lazyParams.sortOrder}
           rowsPerPageOptions={[5, 10, 25, 50]}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorias"
           stripedRows
-          sortMode="multiple"
-          removableSort
         >
           <Column
             field="id"
@@ -288,7 +335,9 @@ export default function CategoriasList() {
               placeholder="Nome da categoria"
               autoFocus
             />
-            {errors.nome && <small className="p-error">{errors.nome}</small>}
+            {errors.nome && (
+              <Message severity="error" text={errors.nome} className="mt-2" />
+            )}
           </div>
 
           <div className="field mb-3">
